@@ -1,0 +1,939 @@
+# 🚀 Panduan Deploy — SciMapPolsub
+
+Panduan langkah demi langkah untuk men-deploy Sistem Pemetaan Luaran Ilmiah ke internet.
+
+---
+
+## Prasyarat
+
+Pastikan komputer Anda sudah terinstall:
+
+- **Node.js** versi 18+ → [https://nodejs.org](https://nodejs.org)
+- **Git** → [https://git-scm.com](https://git-scm.com)
+- **Code Editor** → VS Code direkomendasikan
+
+Cek di terminal:
+
+```bash
+node -v    # minimal v18.x.x
+npm -v     # minimal v9.x.x
+git --version
+```
+
+---
+
+## Langkah 1 — Buat Project React + Vite
+
+```bash
+# Buat project baru
+npm create vite@latest scimap-polsub -- --template react
+
+# Masuk ke folder project
+cd scimap-polsub
+
+# Install dependencies dasar
+npm install
+
+# Install library yang dipakai prototype
+npm install recharts lucide-react
+
+# Install Tailwind CSS
+npm install -D tailwindcss @tailwindcss/vite
+```
+
+---
+
+## Langkah 2 — Konfigurasi Tailwind CSS
+
+Buka file `vite.config.js`, ganti isinya menjadi:
+
+```js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+})
+```
+
+Buka file `src/index.css`, ganti seluruh isinya menjadi:
+
+```css
+@import "tailwindcss";
+```
+
+---
+
+## Langkah 3 — Salin File Prototype
+
+1. Salin file `sistem-pemetaan-luaran-ilmiah.jsx` ke folder `src/`
+2. Rename menjadi `App.jsx` (atau import dari `App.jsx`)
+
+**Opsi A — Langsung ganti App.jsx:**
+
+```bash
+# Hapus App.jsx bawaan, lalu salin file prototype
+cp sistem-pemetaan-luaran-ilmiah.jsx src/App.jsx
+```
+
+**Opsi B — Import dari App.jsx:**
+
+Buka `src/App.jsx`, ganti isinya:
+
+```jsx
+export { default } from './sistem-pemetaan-luaran-ilmiah'
+```
+
+Lalu salin file prototype ke `src/sistem-pemetaan-luaran-ilmiah.jsx`.
+
+---
+
+## Langkah 4 — Edit main.jsx
+
+Buka `src/main.jsx`, pastikan isinya:
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
+```
+
+---
+
+## Langkah 5 — Jalankan Lokal (Test Dulu)
+
+```bash
+npm run dev
+```
+
+Buka browser ke `http://localhost:5173` — pastikan semua tampil dengan baik.
+
+---
+
+## Langkah 6 — Build untuk Production
+
+```bash
+npm run build
+```
+
+Ini akan menghasilkan folder `dist/` berisi file statis siap deploy.
+
+---
+
+## Langkah 7 — Deploy ke Hosting
+
+### Opsi A: Vercel (Rekomendasi — Gratis & Tercepat)
+
+1. Buat akun di [vercel.com](https://vercel.com)
+2. Push project ke GitHub:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit - SciMapPolsub"
+git branch -M main
+git remote add origin https://github.com/USERNAME/scimap-polsub.git
+git push -u origin main
+```
+
+3. Di Vercel dashboard, klik **"Add New Project"**
+4. Pilih repository `scimap-polsub`
+5. Framework otomatis terdeteksi sebagai **Vite**
+6. Klik **Deploy**
+7. Dalam 1-2 menit, website live di `scimap-polsub.vercel.app`
+
+### Opsi B: Netlify (Gratis)
+
+1. Buat akun di [netlify.com](https://netlify.com)
+2. Push ke GitHub (sama seperti langkah di atas)
+3. Di Netlify: **"Add new site" → "Import an existing project"**
+4. Pilih repository, set:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+5. Klik Deploy
+
+### Opsi C: GitHub Pages (Gratis)
+
+```bash
+# Install plugin deploy
+npm install -D gh-pages
+```
+
+Tambahkan ke `package.json`:
+
+```json
+{
+  "homepage": "https://USERNAME.github.io/scimap-polsub",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  }
+}
+```
+
+Tambahkan `base` di `vite.config.js`:
+
+```js
+export default defineConfig({
+  base: '/scimap-polsub/',
+  plugins: [react(), tailwindcss()],
+})
+```
+
+Lalu deploy:
+
+```bash
+npm run deploy
+```
+
+### Opsi D: VPS/Server Kampus (Nginx)
+
+Jika Politeknik Negeri Subang punya server sendiri:
+
+```bash
+# Build di lokal
+npm run build
+
+# Upload folder dist/ ke server
+scp -r dist/* user@server-kampus:/var/www/scimap-polsub/
+```
+
+Konfigurasi Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name scimap.polsub.ac.id;
+    root /var/www/scimap-polsub;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+---
+
+## Langkah 8 — Custom Domain (Opsional)
+
+Jika ingin menggunakan domain kampus seperti `scimap.polsub.ac.id`:
+
+1. Di panel DNS domain kampus, tambahkan record:
+   - **CNAME** → `scimap` → `scimap-polsub.vercel.app` (jika pakai Vercel)
+   - Atau **A Record** → IP server (jika pakai VPS)
+2. Di Vercel/Netlify dashboard → Settings → Domains → tambahkan domain custom
+
+---
+
+## Struktur Folder Akhir
+
+```
+scimap-polsub/
+├── public/
+│   └── favicon.ico
+├── src/
+│   ├── App.jsx                              ← file prototype
+│   ├── index.css                            ← import tailwindcss
+│   └── main.jsx                             ← entry point
+├── index.html
+├── package.json
+├── vite.config.js
+└── README.md
+```
+
+---
+
+## Langkah Selanjutnya (Production-Ready)
+
+Setelah berhasil deploy, berikut hal-hal yang perlu dikembangkan:
+
+1. **Backend API** — Buat server (Node.js/Express atau Laravel) untuk:
+   - Autentikasi login (JWT / session)
+   - Proxy ke API SINTA, Scholar, PDDIKTI, BIMA, GARUDA, ScienceDirect
+   - Database (PostgreSQL/MySQL) untuk menyimpan data dosen & publikasi
+
+2. **API Key Management** — Daftar API key untuk:
+   - SerpAPI (Google Scholar) → [serpapi.com](https://serpapi.com)
+   - Elsevier API (ScienceDirect) → [dev.elsevier.com](https://dev.elsevier.com)
+   - SINTA API → Hubungi Kemdikbud
+
+3. **Environment Variables** — Simpan API key di `.env`:
+   ```
+   VITE_SERPAPI_KEY=xxxxx
+   VITE_ELSEVIER_KEY=xxxxx
+   VITE_SINTA_TOKEN=xxxxx
+   ```
+
+4. **Cron Job** — Jadwalkan sinkronisasi otomatis data dari sumber terbuka
+
+5. **SSL/HTTPS** — Pastikan domain menggunakan HTTPS (otomatis di Vercel/Netlify)
+
+---
+
+> **Butuh bantuan lebih lanjut?** Bawa panduan ini ke tim IT kampus untuk eksekusi deployment di server Politeknik Negeri Subang.
+
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend
+} from "recharts";
+import {
+  Search, Menu, X, ChevronRight, BookOpen, Users, BarChart3,
+  LogIn, UserPlus, Lock, Mail, User, Eye, EyeOff, LayoutDashboard,
+  FileText, Settings, RefreshCw, Shield, Edit3, TrendingUp, Award,
+  ExternalLink, Calendar, MapPin, Phone, Clock, ChevronDown, Layers,
+  Database, Activity, Zap, GraduationCap, Microscope,
+  Network, LogOut, Bell, PlusCircle, Trash2, CheckCircle, AlertCircle,
+  Filter, Download, Link2, Star, Home, BookMarked, UserCheck,
+  PieChart as PieIcon, Loader2, Building, FileSearch, XCircle, Sparkles,
+  Tag, ChevronUp, Fingerprint, BookCopy
+} from "lucide-react";
+
+/*
+  ═══════════════════════════════════════════════════════════
+  KONFIGURASI SUMBER DATA API TERBUKA
+  ═══════════════════════════════════════════════════════════
+
+  Contoh implementasi fetch per-sumber (ganti placeholder API key):
+
+  // 1. Google Scholar (via SerpAPI proxy)
+  async function searchScholar(query) {
+    const res = await fetch(
+      `https://serpapi.com/search.json?engine=google_scholar&q=${encodeURIComponent(query)}&api_key=YOUR_KEY`
+    );
+    const data = await res.json();
+    return data.organic_results?.map(r => ({
+      title: r.title,
+      authors: r.publication_info?.authors?.map(a => a.name) || [],
+      journal: r.publication_info?.summary || "",
+      year: r.publication_info?.year,
+      citations: r.inline_links?.cited_by?.total || 0,
+      url: r.link, source: "Google Scholar",
+    }));
+  }
+
+  // 2. ScienceDirect (Elsevier API)
+  async function searchScienceDirect(query) {
+    const res = await fetch(
+      `https://api.elsevier.com/content/search/sciencedirect?query=${encodeURIComponent(query)}&count=10`,
+      { headers: { "X-ELS-APIKey": "YOUR_KEY", Accept: "application/json" } }
+    );
+    const data = await res.json();
+    return data["search-results"]?.entry?.map(r => ({
+      title: r["dc:title"], doi: r["prism:doi"],
+      journal: r["prism:publicationName"], source: "ScienceDirect",
+    }));
+  }
+
+  // 3. SINTA (Kemdikbud)
+  async function searchSinta(query) {
+    const res = await fetch(
+      `https://api.sinta.kemdikbud.go.id/v3/authors?keyword=${encodeURIComponent(query)}`,
+      { headers: { Authorization: "Bearer YOUR_TOKEN" } }
+    );
+    return await res.json();
+  }
+
+  // 4. GARUDA (Garba Rujukan Digital)
+  async function searchGaruda(query) {
+    const res = await fetch(
+      `https://garuda.kemdikbud.go.id/api/v1/search?q=${encodeURIComponent(query)}&type=article`
+    );
+    return await res.json();
+  }
+
+  // 5. BIMA (Kemenristekdikti)
+  async function searchBima(nidn) {
+    const res = await fetch(`https://bima.kemdikbud.go.id/api/penelitian?nidn=${nidn}`);
+    return await res.json();
+  }
+
+  // 6. PDDIKTI
+  async function searchPddikti(query) {
+    const res = await fetch(
+      `https://api-frontend.kemdikbud.go.id/v2/search_dosen?keyword=${encodeURIComponent(query)}`
+    );
+    return await res.json();
+  }
+
+  // Pencarian paralel semua sumber sekaligus
+  async function searchAllSources(query, sources) {
+    const fetchers = { scholar: searchScholar, sciencedirect: searchScienceDirect,
+      sinta: searchSinta, garuda: searchGaruda, bima: searchBima, pddikti: searchPddikti };
+    const results = await Promise.allSettled(
+      sources.map(s => fetchers[s](query))
+    );
+    return results.flatMap((r,i) => r.status === "fulfilled" ? r.value : []);
+  }
+*/
+
+const API_SOURCES = {
+  scholar:       { id: "scholar",       name: "Google Scholar",  color: "#4285F4", icon: "🎓" },
+  sciencedirect: { id: "sciencedirect", name: "ScienceDirect",   color: "#EC7B1C", icon: "🔬" },
+  sinta:         { id: "sinta",         name: "SINTA",           color: "#1E8449", icon: "📊" },
+  bima:          { id: "bima",          name: "BIMA",            color: "#8E44AD", icon: "📋" },
+  pddikti:       { id: "pddikti",       name: "PDDIKTI",        color: "#2C3E50", icon: "🏛️" },
+  garuda:        { id: "garuda",        name: "GARUDA",          color: "#C0392B", icon: "🦅" },
+};
+
+// ─── MOCK DATABASE ───
+const RESEARCHERS = [
+  { id:1,name:"Dr. Hj. Siti Nurhasanah, M.Kes.",nidn:"0412057501",prodi:"D-III Keperawatan",scholar_id:"abc123",sinta_id:"6012345",sinta_score:312,h_index:5,publications:23,scopus:3,email:"siti.nurhasanah@polsub.ac.id",bidang:"Keperawatan Komunitas",institusi:"Politeknik Negeri Subang" },
+  { id:2,name:"Ns. Ahmad Ridwan, S.Kep., M.Kep.",nidn:"0518068201",prodi:"D-III Keperawatan",scholar_id:"def456",sinta_id:"6012346",sinta_score:245,h_index:4,publications:18,scopus:2,email:"ahmad.ridwan@polsub.ac.id",bidang:"Keperawatan Medikal Bedah",institusi:"Politeknik Negeri Subang" },
+  { id:3,name:"Dr. Rina Marlina, S.KM., M.KM.",nidn:"0623077803",prodi:"D-IV Promosi Kesehatan",scholar_id:"ghi789",sinta_id:"6012347",sinta_score:289,h_index:6,publications:31,scopus:5,email:"rina.marlina@polsub.ac.id",bidang:"Epidemiologi & Promosi Kesehatan",institusi:"Politeknik Negeri Subang" },
+  { id:4,name:"Apt. Dedi Supriadi, S.Farm., M.Farm.",nidn:"0709088504",prodi:"D-III Farmasi",scholar_id:"jkl012",sinta_id:"6012348",sinta_score:198,h_index:3,publications:14,scopus:1,email:"dedi.supriadi@polsub.ac.id",bidang:"Farmakologi Klinik",institusi:"Politeknik Negeri Subang" },
+  { id:5,name:"Dr. Lilis Suryani, S.ST., M.Keb.",nidn:"0815097206",prodi:"D-III Kebidanan",scholar_id:"mno345",sinta_id:"6012349",sinta_score:267,h_index:5,publications:27,scopus:4,email:"lilis.suryani@polsub.ac.id",bidang:"Kebidanan Komunitas",institusi:"Politeknik Negeri Subang" },
+  { id:6,name:"Ns. Fitriani Dewi, S.Kep., M.Kep.",nidn:"0921108807",prodi:"D-III Keperawatan",scholar_id:"pqr678",sinta_id:"6012350",sinta_score:176,h_index:3,publications:12,scopus:1,email:"fitriani.dewi@polsub.ac.id",bidang:"Keperawatan Anak",institusi:"Politeknik Negeri Subang" },
+];
+
+const MOCK_SEARCH_DB = [
+  { id:"s01",title:"Pengaruh Edukasi Kesehatan terhadap Perilaku Hidup Bersih Masyarakat Desa di Kabupaten Subang",authors:["Siti Nurhasanah","Ahmad Ridwan"],journal:"Jurnal Kesehatan Masyarakat Nasional",year:2024,type:"Jurnal Nasional Terakreditasi",grade:"S2",doi:"10.7454/jkmn.v19i2.1045",citations:8,source_id:"sinta",abstract:"Penelitian ini menganalisis pengaruh edukasi kesehatan terstruktur terhadap perubahan perilaku hidup bersih dan sehat (PHBS) pada masyarakat pedesaan di Kabupaten Subang.",institusi:"Politeknik Negeri Subang",keywords:["edukasi kesehatan","PHBS","masyarakat desa","Subang"] },
+  { id:"s02",title:"Community-Based Nursing Intervention for Diabetes Management in Rural Indonesia",authors:["Ahmad Ridwan","Rina Marlina"],journal:"International Journal of Nursing Sciences",year:2024,type:"Jurnal Internasional",grade:"Q2",doi:"10.1016/j.ijnss.2024.03.055",citations:15,source_id:"scholar",abstract:"This study evaluates a community-based nursing intervention for improving diabetes self-management among rural populations in West Java.",institusi:"Politeknik Negeri Subang",keywords:["diabetes","nursing","community health","rural Indonesia"] },
+  { id:"s03",title:"Analisis Determinan Stunting pada Balita di Wilayah Kerja Puskesmas Subang",authors:["Rina Marlina","Lilis Suryani"],journal:"Jurnal Epidemiologi Kesehatan Indonesia",year:2024,type:"Jurnal Nasional Terakreditasi",grade:"S1",doi:"10.7454/jeki.v8i1.6012",citations:12,source_id:"garuda",abstract:"Penelitian cross-sectional menganalisis faktor determinan stunting pada balita usia 0-59 bulan di wilayah kerja Puskesmas Kabupaten Subang.",institusi:"Politeknik Negeri Subang",keywords:["stunting","balita","determinan","puskesmas"] },
+  { id:"s04",title:"Formulasi Sediaan Gel Ekstrak Daun Jambu Biji sebagai Antiseptik Tangan",authors:["Dedi Supriadi"],journal:"Jurnal Farmasi & Sains Indonesia",year:2023,type:"Jurnal Nasional Terakreditasi",grade:"S3",doi:"10.xxxx/jfsi.2023.089",citations:4,source_id:"sinta",abstract:"Formulasi dan uji efektivitas gel antiseptik dari ekstrak daun jambu biji (Psidium guajava L.).",institusi:"Politeknik Negeri Subang",keywords:["gel antiseptik","jambu biji","formulasi","farmasi"] },
+  { id:"s05",title:"Effectiveness of Prenatal Yoga on Reducing Anxiety Among Primigravida Women",authors:["Lilis Suryani","Siti Nurhasanah"],journal:"Midwifery Journal",year:2024,type:"Jurnal Internasional",grade:"Q3",doi:"10.1016/j.midw.2024.034",citations:7,source_id:"sciencedirect",abstract:"A quasi-experimental study examining prenatal yoga effectiveness in reducing anxiety levels among primigravida women.",institusi:"Politeknik Negeri Subang",keywords:["prenatal yoga","anxiety","primigravida","midwifery"] },
+  { id:"s06",title:"Hubungan Pola Asuh Orang Tua dengan Tumbuh Kembang Anak Usia Prasekolah",authors:["Fitriani Dewi","Siti Nurhasanah"],journal:"Jurnal Keperawatan Anak",year:2023,type:"Jurnal Nasional Terakreditasi",grade:"S2",doi:"10.xxxx/jka.2023.045",citations:6,source_id:"garuda",abstract:"Studi korelasi meneliti hubungan pola asuh dengan tumbuh kembang anak prasekolah di Kecamatan Subang.",institusi:"Politeknik Negeri Subang",keywords:["pola asuh","tumbuh kembang","anak prasekolah"] },
+  { id:"s07",title:"Pengembangan Media Edukasi Digital untuk Pencegahan COVID-19 di Pondok Pesantren",authors:["Rina Marlina","Ahmad Ridwan","Siti Nurhasanah"],journal:"Health Promotion Journal of Indonesia",year:2023,type:"Jurnal Nasional Terakreditasi",grade:"S2",doi:"10.xxxx/hpji.2023.077",citations:9,source_id:"sinta",abstract:"Penelitian R&D mengembangkan media edukasi digital (aplikasi mobile) untuk pencegahan COVID-19 di pesantren.",institusi:"Politeknik Negeri Subang",keywords:["media edukasi","COVID-19","pesantren","promosi kesehatan"] },
+  { id:"s08",title:"Studi Etnofarmasi Tumbuhan Obat Tradisional Masyarakat Sunda di Kabupaten Subang",authors:["Dedi Supriadi","Rina Marlina"],journal:"Jurnal Farmasi Indonesia",year:2024,type:"Jurnal Nasional Terakreditasi",grade:"S2",doi:"10.xxxx/jfi.2024.023",citations:3,source_id:"garuda",abstract:"Eksplorasi etnofarmasi pemanfaatan tumbuhan obat tradisional masyarakat Sunda di Kabupaten Subang.",institusi:"Politeknik Negeri Subang",keywords:["etnofarmasi","tumbuhan obat","Sunda","Subang"] },
+  { id:"s09",title:"Penerapan Telenursing dalam Pemantauan Pasien Hipertensi di Era Digital",authors:["Ahmad Ridwan","Fitriani Dewi"],journal:"Jurnal Keperawatan Indonesia",year:2024,type:"Jurnal Nasional Terakreditasi",grade:"S1",doi:"10.7454/jki.v27i1.2105",citations:5,source_id:"sinta",abstract:"Studi intervensi telenursing berbasis WhatsApp untuk pemantauan tekanan darah dan kepatuhan pengobatan hipertensi.",institusi:"Politeknik Negeri Subang",keywords:["telenursing","hipertensi","digital health"] },
+  { id:"s10",title:"Factors Associated with Exclusive Breastfeeding Practice in West Java",authors:["Lilis Suryani","Rina Marlina"],journal:"Asian Journal of Midwifery",year:2023,type:"Jurnal Internasional",grade:"Q3",doi:"10.xxxx/ajm.2023.112",citations:11,source_id:"scholar",abstract:"Cross-sectional study investigating determinants of exclusive breastfeeding among mothers in rural West Java.",institusi:"Politeknik Negeri Subang",keywords:["exclusive breastfeeding","West Java","midwifery"] },
+  { id:"s11",title:"Efektivitas Senam Kegel pada Ibu Postpartum terhadap Inkontinensia Urin",authors:["Lilis Suryani"],journal:"Jurnal Kebidanan Nusantara",year:2023,type:"Jurnal Nasional Terakreditasi",grade:"S3",doi:"10.xxxx/jkn.2023.067",citations:2,source_id:"garuda",abstract:"Quasi-experimental study tentang efektivitas senam kegel terhadap inkontinensia urin pada ibu postpartum.",institusi:"Politeknik Negeri Subang",keywords:["senam kegel","postpartum","inkontinensia urin"] },
+  { id:"s12",title:"Analisis Fitokimia dan Aktivitas Antioksidan Kulit Nanas Subang",authors:["Dedi Supriadi"],journal:"Jurnal Sains Farmasi",year:2024,type:"Jurnal Nasional Terakreditasi",grade:"S3",doi:"10.xxxx/jsf.2024.034",citations:1,source_id:"sinta",abstract:"Analisis fitokimia dan uji antioksidan dari ekstrak kulit nanas varietas Subang dengan metode DPPH.",institusi:"Politeknik Negeri Subang",keywords:["fitokimia","antioksidan","nanas","Subang"] },
+  { id:"s13",title:"Hibah Fundamental: Model Intervensi Keperawatan Keluarga untuk Pencegahan PTM",authors:["Siti Nurhasanah","Ahmad Ridwan"],journal:"BIMA Kemenristekdikti",year:2024,type:"Hibah Penelitian",grade:"Hibah",doi:"-",citations:0,source_id:"bima",abstract:"Pengembangan model intervensi keperawatan keluarga terintegrasi untuk pencegahan penyakit tidak menular di pedesaan.",institusi:"Politeknik Negeri Subang",keywords:["hibah","keperawatan keluarga","PTM"] },
+  { id:"s14",title:"Penelitian Terapan: Pengembangan Alat Deteksi Dini Risiko Stunting Berbasis IoT",authors:["Rina Marlina","Dedi Supriadi"],journal:"BIMA Kemenristekdikti",year:2024,type:"Hibah Penelitian",grade:"Hibah",doi:"-",citations:0,source_id:"bima",abstract:"Pengembangan perangkat IoT untuk deteksi dini faktor risiko stunting pada balita di posyandu.",institusi:"Politeknik Negeri Subang",keywords:["hibah","stunting","IoT","posyandu"] },
+  { id:"s15",title:"Profil Dosen PDDIKTI: Jurusan Kesehatan Politeknik Negeri Subang",authors:[],journal:"PDDIKTI Kemdikbud",year:2024,type:"Data Dosen",grade:"—",doi:"-",citations:0,source_id:"pddikti",abstract:"Data profil lengkap dosen aktif Jurusan Kesehatan Politeknik Negeri Subang di Pangkalan Data Pendidikan Tinggi.",institusi:"Politeknik Negeri Subang",keywords:["PDDIKTI","dosen","profil","Politeknik Negeri Subang"] },
+];
+
+const YEARLY_STATS = [
+  { year:"2019",publikasi:18,sitasi:42,scopus:2 },{ year:"2020",publikasi:22,sitasi:58,scopus:3 },
+  { year:"2021",publikasi:28,sitasi:89,scopus:4 },{ year:"2022",publikasi:35,sitasi:124,scopus:6 },
+  { year:"2023",publikasi:41,sitasi:167,scopus:8 },{ year:"2024",publikasi:48,sitasi:215,scopus:11 },
+];
+const PUB_TYPE_DATA = [
+  { name:"Jurnal Nasional",value:68,color:"#0ea5e9" },{ name:"Jurnal Internasional",value:18,color:"#10b981" },
+  { name:"Prosiding",value:22,color:"#f59e0b" },{ name:"Buku/Book Chapter",value:8,color:"#8b5cf6" },
+  { name:"HKI/Paten",value:5,color:"#f43f5e" },
+];
+const COLLAB_NODES = [
+  { id:"polsub",label:"Jur. Kesehatan\nPolsub",x:350,y:220,r:48,primary:true },
+  { id:"unpad",label:"Universitas\nPadjadjaran",x:160,y:100,r:34 },{ id:"ui",label:"Universitas\nIndonesia",x:540,y:90,r:32 },
+  { id:"ugm",label:"Universitas\nGadjah Mada",x:580,y:260,r:30 },{ id:"undip",label:"Universitas\nDiponegoro",x:150,y:310,r:28 },
+  { id:"unsub",label:"Universitas\nSubang",x:300,y:400,r:30 },{ id:"stikes",label:"STIKes\nSubang",x:480,y:390,r:28 },
+  { id:"dinkes",label:"Dinkes\nKab. Subang",x:120,y:200,r:26 },{ id:"kemenkes",label:"Kemenkes\nRI",x:560,y:170,r:28 },
+];
+const COLLAB_EDGES = [
+  {from:"polsub",to:"unpad",strength:5},{from:"polsub",to:"ui",strength:3},{from:"polsub",to:"ugm",strength:2},
+  {from:"polsub",to:"undip",strength:2},{from:"polsub",to:"unsub",strength:7},{from:"polsub",to:"stikes",strength:4},
+  {from:"polsub",to:"dinkes",strength:6},{from:"polsub",to:"kemenkes",strength:3},{from:"unpad",to:"ui",strength:1},{from:"unsub",to:"dinkes",strength:3},
+];
+
+// ─── UTILS ───
+function useCounter(end, dur = 2000) {
+  const [c, setC] = useState(0);
+  useEffect(() => { let s=0; const inc=end/(dur/16); const t=setInterval(()=>{s+=inc;if(s>=end){setC(end);clearInterval(t);}else setC(Math.floor(s));},16); return()=>clearInterval(t); }, [end, dur]);
+  return c;
+}
+function Avatar({ name, size = 40 }) {
+  const cols = ["#0d9488","#0284c7","#7c3aed","#db2777","#ea580c","#16a34a"];
+  const ini = name.split(" ").filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join("");
+  return <div style={{width:size,height:size,backgroundColor:cols[name.length%cols.length],fontSize:size*.38}} className="rounded-full flex items-center justify-center text-white font-bold shrink-0 shadow-md">{ini}</div>;
+}
+function Badge({ children, variant = "default" }) {
+  const s = { default:"bg-slate-100 text-slate-600", primary:"bg-teal-50 text-teal-700 border border-teal-200", success:"bg-emerald-50 text-emerald-700 border border-emerald-200", warning:"bg-amber-50 text-amber-700 border border-amber-200", danger:"bg-rose-50 text-rose-700 border border-rose-200", info:"bg-sky-50 text-sky-700 border border-sky-200", purple:"bg-violet-50 text-violet-700 border border-violet-200" };
+  return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${s[variant]}`}>{children}</span>;
+}
+function Toast({ message, type="success", onClose }) {
+  useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t);},[onClose]);
+  return <div className={`fixed top-6 right-6 z-[9999] ${type==="success"?"bg-emerald-600":"bg-rose-600"} text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3`} style={{animation:"slideIn .3s ease-out"}}>{type==="success"?<CheckCircle size={18}/>:<AlertCircle size={18}/>}<span className="text-sm font-medium">{message}</span></div>;
+}
+
+// ─── COLLAB GRAPH ───
+function CollabGraph() {
+  const [hov, setHov] = useState(null);
+  const nm = useMemo(()=>Object.fromEntries(COLLAB_NODES.map(n=>[n.id,n])),[]);
+  return (
+    <svg viewBox="0 0 700 480" className="w-full h-auto" style={{maxHeight:420}}>
+      <defs><radialGradient id="gl" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#0d9488" stopOpacity=".15"/><stop offset="100%" stopColor="#0d9488" stopOpacity="0"/></radialGradient><filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#0d9488" floodOpacity=".25"/></filter></defs>
+      {COLLAB_EDGES.map((e,i)=>{const f=nm[e.from],t=nm[e.to],a=hov===e.from||hov===e.to;return<line key={i} x1={f.x} y1={f.y} x2={t.x} y2={t.y} stroke={a?"#0d9488":"#cbd5e1"} strokeWidth={Math.max(1.5,e.strength*.7)} strokeDasharray={e.strength<3?"6,4":"none"} opacity={a?1:.5} style={{transition:"all .3s"}}/>;
+      })}
+      {COLLAB_NODES.map(n=>{const a=hov===n.id;return(
+        <g key={n.id} onMouseEnter={()=>setHov(n.id)} onMouseLeave={()=>setHov(null)} style={{cursor:"pointer"}}>
+          {n.primary&&<circle cx={n.x} cy={n.y} r={n.r+20} fill="url(#gl)"/>}
+          <circle cx={n.x} cy={n.y} r={a?n.r+4:n.r} fill={n.primary?"#0d9488":a?"#0284c7":"#f1f5f9"} stroke={n.primary?"#0f766e":a?"#0284c7":"#94a3b8"} strokeWidth={n.primary?3:2} filter={a?"url(#sh)":"none"} style={{transition:"all .3s"}}/>
+          {n.label.split("\n").map((l,li)=><text key={li} x={n.x} y={n.y+(li-.5)*13} textAnchor="middle" dominantBaseline="central" fill={n.primary?"white":a?"#0c4a6e":"#475569"} fontSize={n.primary?10:9} fontWeight={n.primary?700:500} style={{pointerEvents:"none"}}>{l}</text>)}
+        </g>);})}
+    </svg>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// MESIN PENCARIAN MULTI-SUMBER
+// ═══════════════════════════════════════════════════════════
+function useMultiSourceSearch() {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("semua");
+  const [enabled, setEnabled] = useState(Object.keys(API_SOURCES).reduce((a,k)=>({...a,[k]:true}),{}));
+  const [searching, setSearching] = useState(false);
+  const [srcStatus, setSrcStatus] = useState({});
+  const [results, setResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const toggle = (id) => setEnabled(p=>({...p,[id]:!p[id]}));
+
+  const doSearch = useCallback(async (q) => {
+    const term = (q||query).trim().toLowerCase();
+    if (!term) return;
+    setSearching(true); setHasSearched(true); setResults([]);
+    const active = Object.entries(enabled).filter(([,v])=>v).map(([k])=>k);
+    const init = {}; active.forEach(s=>{init[s]="loading";}); setSrcStatus(init);
+
+    // TODO: Ganti simulasi ini dengan fetch API asli (lihat kode di atas)
+    const filtered = MOCK_SEARCH_DB.filter(item => {
+      if (!enabled[item.source_id]) return false;
+      if (category==="judul") return item.title.toLowerCase().includes(term);
+      if (category==="dosen") return item.authors.some(a=>a.toLowerCase().includes(term));
+      if (category==="doi") return item.doi.toLowerCase().includes(term);
+      if (category==="institusi") return item.institusi.toLowerCase().includes(term);
+      return item.title.toLowerCase().includes(term)||item.authors.some(a=>a.toLowerCase().includes(term))||item.doi.toLowerCase().includes(term)||item.institusi.toLowerCase().includes(term)||item.keywords.some(k=>k.toLowerCase().includes(term))||item.journal.toLowerCase().includes(term)||item.abstract.toLowerCase().includes(term);
+    });
+
+    const perSrc = {};
+    filtered.forEach(r=>{if(!perSrc[r.source_id])perSrc[r.source_id]=[];perSrc[r.source_id].push(r);});
+
+    let cum = [];
+    const delays = [600,500,400,500,400,500];
+    for (let i=0;i<active.length;i++) {
+      await new Promise(res=>setTimeout(res,delays[i]));
+      const sid = active[i];
+      if (perSrc[sid]) cum=[...cum,...perSrc[sid]];
+      setResults([...cum]);
+      setSrcStatus(p=>({...p,[sid]:perSrc[sid]?.length?"done":"empty"}));
+    }
+    setSearching(false);
+  },[query,category,enabled]);
+
+  const clear = ()=>{setQuery("");setResults([]);setHasSearched(false);setSrcStatus({});};
+  return { query,setQuery,category,setCategory,enabled,toggle,searching,srcStatus,results,hasSearched,doSearch,clear };
+}
+
+// ─── SEARCH BAR ───
+function SearchBar({ s }) {
+  const cats = [{k:"semua",l:"Semua",i:Sparkles},{k:"judul",l:"Judul Publikasi",i:FileSearch},{k:"dosen",l:"Nama Dosen",i:User},{k:"doi",l:"DOI Artikel",i:Fingerprint},{k:"institusi",l:"Institusi",i:Building}];
+  const submit = (e)=>{e?.preventDefault();s.doSearch();};
+  return (
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+        {cats.map(c=><button key={c.k} onClick={()=>s.setCategory(c.k)} className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${s.category===c.k?"bg-white text-teal-700 shadow-lg ring-1 ring-teal-200":"bg-white/20 text-white/80 hover:bg-white/30"}`}><c.i size={13}/>{c.l}</button>)}
+      </div>
+      <form onSubmit={submit} className="relative">
+        <div className="flex items-center bg-white rounded-2xl shadow-2xl shadow-teal-900/20 ring-1 ring-white/50 overflow-hidden focus-within:ring-teal-300 transition-all">
+          <div className="pl-5 pr-2 py-4"><Search size={22} className="text-teal-500"/></div>
+          <input type="text" value={s.query} onChange={e=>s.setQuery(e.target.value)}
+            placeholder={s.category==="judul"?"Masukkan judul publikasi...":s.category==="dosen"?"Masukkan nama dosen...":s.category==="doi"?"Masukkan DOI artikel...":s.category==="institusi"?"Masukkan nama institusi...":"Cari judul, dosen, DOI, atau institusi..."}
+            className="flex-1 py-4 pr-2 text-sm sm:text-base text-slate-700 placeholder-slate-400 outline-none bg-transparent"/>
+          {s.query&&<button type="button" onClick={s.clear} className="p-2 mr-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"><XCircle size={18}/></button>}
+          <button type="submit" disabled={s.searching||!s.query.trim()} className="mr-2 px-5 sm:px-7 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-bold rounded-xl shadow-lg shadow-teal-300/40 text-sm disabled:opacity-50 flex items-center gap-2">
+            {s.searching?<Loader2 size={17} className="animate-spin"/>:<Search size={17}/>}<span className="hidden sm:inline">{s.searching?"Mencari...":"Cari"}</span>
+          </button>
+        </div>
+      </form>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        {Object.values(API_SOURCES).map(src=>{const on=s.enabled[src.id],st=s.srcStatus[src.id];return(
+          <button key={src.id} onClick={()=>s.toggle(src.id)} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${on?"bg-white/95 border-white/60 text-slate-700 shadow-md":"bg-white/10 border-white/20 text-white/50 hover:bg-white/20"}`}>
+            <span className="text-sm">{src.icon}</span>{src.name}
+            {st==="loading"&&<Loader2 size={12} className="animate-spin text-teal-500"/>}
+            {st==="done"&&<CheckCircle size={12} className="text-emerald-500"/>}
+            {st==="empty"&&<span className="w-2 h-2 rounded-full bg-slate-400"/>}
+            {!st&&<span className={`w-2 h-2 rounded-full ${on?"bg-emerald-400":"bg-slate-500"}`}/>}
+          </button>);
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── SEARCH RESULTS ───
+function SearchResults({ s }) {
+  const [sort, setSort] = useState("relevance");
+  const [fSrc, setFSrc] = useState("all");
+  const [expanded, setExpanded] = useState(null);
+  const [view, setView] = useState("list");
+
+  const activeSrc = Object.entries(s.srcStatus).filter(([,v])=>v==="done");
+  const sorted = useMemo(()=>{
+    let r=[...s.results]; if(fSrc!=="all") r=r.filter(i=>i.source_id===fSrc);
+    if(sort==="year")r.sort((a,b)=>b.year-a.year);else if(sort==="citations")r.sort((a,b)=>b.citations-a.citations);return r;
+  },[s.results,sort,fSrc]);
+
+  const matchedR = useMemo(()=>{
+    if(!s.query)return[];const q=s.query.toLowerCase();
+    return RESEARCHERS.filter(r=>r.name.toLowerCase().includes(q)||r.bidang.toLowerCase().includes(q)||r.prodi.toLowerCase().includes(q)||r.nidn.includes(q));
+  },[s.query]);
+
+  if (!s.hasSearched) return null;
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 mb-8" id="hasil">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800" style={{fontFamily:"'Outfit',sans-serif"}}>Hasil Pencarian</h2>
+            {s.searching&&<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-xs font-semibold"><Loader2 size={12} className="animate-spin"/>Memindai sumber...</span>}
+          </div>
+          <p className="text-sm text-slate-500">Ditemukan <strong className="text-teal-700">{s.results.length}</strong> hasil untuk "<strong>{s.query}</strong>"{activeSrc.length>0&&<> dari <strong>{activeSrc.length}</strong> sumber</>}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={()=>setFSrc("all")} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${fSrc==="all"?"bg-teal-600 text-white shadow":"bg-slate-100 text-slate-600"}`}>Semua</button>
+          {Object.values(API_SOURCES).filter(src=>s.enabled[src.id]).map(src=>{const cnt=s.results.filter(r=>r.source_id===src.id).length;if(!cnt)return null;return(
+            <button key={src.id} onClick={()=>setFSrc(src.id)} className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all ${fSrc===src.id?"text-white shadow":"bg-slate-100 text-slate-600"}`} style={fSrc===src.id?{backgroundColor:src.color}:{}}>{src.icon}{src.name}<span className="opacity-70">({cnt})</span></button>);
+          })}
+          <select value={sort} onChange={e=>setSort(e.target.value)} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 border-0 outline-none cursor-pointer"><option value="relevance">Relevansi</option><option value="year">Terbaru</option><option value="citations">Sitasi Terbanyak</option></select>
+          <div className="flex bg-slate-100 rounded-lg p-0.5">
+            <button onClick={()=>setView("list")} className={`p-1.5 rounded-md ${view==="list"?"bg-white shadow text-teal-600":"text-slate-400"}`}><Menu size={14}/></button>
+            <button onClick={()=>setView("grid")} className={`p-1.5 rounded-md ${view==="grid"?"bg-white shadow text-teal-600":"text-slate-400"}`}><Layers size={14}/></button>
+          </div>
+          <button onClick={s.clear} className="p-2 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500" title="Tutup"><X size={18}/></button>
+        </div>
+      </div>
+
+      {/* Source progress */}
+      {s.searching&&(
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-6">
+          {Object.values(API_SOURCES).filter(src=>s.enabled[src.id]).map(src=>{const st=s.srcStatus[src.id]||"idle";return(
+            <div key={src.id} className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-2"><span className="text-sm">{src.icon}</span><span className="text-xs font-bold text-slate-700 truncate">{src.name}</span></div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-700 ${st==="loading"?"w-2/3 animate-pulse":st==="done"||st==="empty"?"w-full":"w-0"}`} style={{backgroundColor:src.color}}/></div>
+              <div className="text-[10px] mt-1.5 font-medium" style={{color:src.color}}>{st==="loading"?"Memindai...":st==="done"?`${s.results.filter(r=>r.source_id===src.id).length} ditemukan`:st==="empty"?"0 hasil":"Menunggu..."}</div>
+            </div>);
+          })}
+        </div>
+      )}
+
+      {/* Matched Researchers */}
+      {matchedR.length>0&&(
+        <div className="mb-6">
+          <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Users size={16} className="text-teal-600"/>Peneliti Ditemukan ({matchedR.length})</h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {matchedR.map(r=>(
+              <div key={r.id} className="bg-white rounded-xl p-4 border border-slate-100 shadow-md hover:shadow-lg hover:border-teal-200 transition-all group">
+                <div className="flex items-start gap-3">
+                  <Avatar name={r.name} size={44}/>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-slate-800 truncate group-hover:text-teal-700">{r.name}</div>
+                    <div className="text-xs text-slate-500">{r.prodi} • {r.institusi}</div>
+                    <Badge variant="primary">{r.bidang}</Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-center bg-slate-50 rounded-lg p-2.5 mt-3">
+                  {[{l:"SINTA",v:r.sinta_score},{l:"H-Idx",v:r.h_index},{l:"Pub",v:r.publications},{l:"Scopus",v:r.scopus}].map(m=><div key={m.l}><div className="text-sm font-extrabold text-teal-700">{m.v}</div><div className="text-[10px] text-slate-500">{m.l}</div></div>)}
+                </div>
+                <div className="flex gap-1.5 mt-2.5">
+                  <a href={`https://scholar.google.com/citations?user=${r.scholar_id}`} target="_blank" rel="noopener" className="flex-1 text-center text-[11px] py-1.5 rounded-lg font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100">Scholar</a>
+                  <a href={`https://sinta.kemdikbud.go.id/authors/profile/${r.sinta_id}`} target="_blank" rel="noopener" className="flex-1 text-center text-[11px] py-1.5 rounded-lg font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100">SINTA</a>
+                  <a href={`https://pddikti.kemdikbud.go.id/data_dosen/${r.nidn}`} target="_blank" rel="noopener" className="flex-1 text-center text-[11px] py-1.5 rounded-lg font-semibold bg-violet-50 text-violet-700 hover:bg-violet-100">PDDIKTI</a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Publication Results */}
+      {sorted.length>0?(
+        <div className={view==="grid"?"grid sm:grid-cols-2 gap-3":"space-y-3"}>
+          {sorted.map(pub=>{const src=API_SOURCES[pub.source_id];const isExp=expanded===pub.id;return(
+            <div key={pub.id} className="bg-white rounded-xl border border-slate-100 shadow-md hover:shadow-lg hover:border-teal-200 transition-all overflow-hidden" style={{animation:"fadeUp .4s ease-out",borderLeft:`3px solid ${src?.color||"#94a3b8"}`}}>
+              <div className="p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-white" style={{backgroundColor:src?.color}}>{src?.icon} {src?.name}</span>
+                      {pub.grade!=="—"&&<Badge variant={pub.grade?.startsWith("Q")?"success":pub.grade==="Hibah"?"purple":"info"}>{pub.grade}</Badge>}
+                      <Badge variant="default">{pub.type}</Badge>
+                      <span className="text-xs text-slate-400 flex items-center gap-1"><Calendar size={11}/>{pub.year}</span>
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-800 leading-snug hover:text-teal-700 cursor-pointer" onClick={()=>setExpanded(isExp?null:pub.id)}>{pub.title}</h3>
+                    <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5"><Users size={12} className="text-slate-400 shrink-0"/>{pub.authors.length?pub.authors.join(", "):"—"}</p>
+                    <p className="text-xs text-slate-400 italic mt-0.5 flex items-center gap-1.5"><BookCopy size={12} className="shrink-0"/>{pub.journal}</p>
+                    {isExp&&(
+                      <div className="mt-3 pt-3 border-t border-slate-100" style={{animation:"fadeUp .2s ease-out"}}>
+                        <p className="text-xs text-slate-600 leading-relaxed mb-2"><strong className="text-slate-700">Abstrak:</strong> {pub.abstract}</p>
+                        <div className="flex flex-wrap gap-1.5">{pub.keywords.map(k=><span key={k} className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-500 rounded-md text-[10px] font-medium border border-slate-200"><Tag size={9}/>{k}</span>)}</div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    {pub.citations>0&&<div className="text-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5"><div className="text-base font-extrabold text-amber-600">{pub.citations}</div><div className="text-[9px] text-amber-500 font-medium">Sitasi</div></div>}
+                    <div className="flex gap-1">
+                      <button onClick={()=>setExpanded(isExp?null:pub.id)} className="p-1.5 rounded-lg hover:bg-teal-50 text-slate-400 hover:text-teal-600">{isExp?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button>
+                      {pub.doi!=="-"&&<a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener" className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600"><ExternalLink size={15}/></a>}
+                    </div>
+                  </div>
+                </div>
+                {pub.doi!=="-"&&<div className="mt-2 pt-2 border-t border-slate-50 flex items-center gap-2 text-xs text-slate-400"><Fingerprint size={12}/><span className="font-mono truncate">{pub.doi}</span></div>}
+              </div>
+            </div>);})}
+        </div>
+      ):!s.searching&&(
+        <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4"><FileSearch size={28} className="text-slate-400"/></div>
+          <h3 className="text-lg font-bold text-slate-700 mb-1">Tidak Ada Hasil</h3>
+          <p className="text-sm text-slate-500 max-w-md mx-auto">Tidak ditemukan data untuk "<strong>{s.query}</strong>". Coba kata kunci lain atau aktifkan lebih banyak sumber.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// LANDING PAGE
+// ═══════════════════════════════════════════════════════════
+function LandingPage({ onNavigate }) {
+  const [mob, setMob] = useState(false);
+  const search = useMultiSourceSearch();
+  const tp = useCounter(121), td = useCounter(RESEARCHERS.length), ts = useCounter(695), tsc = useCounter(16);
+  const suggestions = ["stunting","keperawatan","farmasi","Politeknik Negeri Subang","prenatal yoga","COVID-19","10.7454"];
+
+  return (
+    <div className="min-h-screen" style={{background:"linear-gradient(180deg,#f0fdfa 0%,#f8fafc 30%,#fff 100%)"}}>
+      {/* NAV */}
+      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-teal-100/60 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-200"><Microscope size={22} className="text-white"/></div><div className="hidden sm:block"><div className="text-sm font-bold text-slate-800" style={{fontFamily:"'Outfit',sans-serif"}}>SciMap<span className="text-teal-600">Polsub</span></div><div className="text-[10px] text-slate-500 -mt-0.5">Pemetaan Luaran Ilmiah</div></div></div>
+          <div className="hidden md:flex items-center gap-1">{[{l:"Beranda",i:Home},{l:"Pencarian",i:Search},{l:"Peneliti",i:Users},{l:"Statistik",i:BarChart3},{l:"Kolaborasi",i:Network}].map(n=><a key={n.l} href={`#${n.l.toLowerCase()}`} className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-all flex items-center gap-1.5"><n.i size={15}/>{n.l}</a>)}</div>
+          <div className="flex items-center gap-2">
+            <button onClick={()=>onNavigate("login")} className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-xl border border-teal-200"><LogIn size={16}/>Masuk</button>
+            <button onClick={()=>onNavigate("register")} className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-teal-600 to-cyan-600 rounded-xl shadow-lg shadow-teal-200"><UserPlus size={16}/>Daftar</button>
+            <button onClick={()=>setMob(!mob)} className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">{mob?<X size={22}/>:<Menu size={22}/>}</button>
+          </div>
+        </div></div>
+        {mob&&<div className="md:hidden border-t border-slate-100 bg-white pb-4 px-4">{["Beranda","Pencarian","Peneliti","Statistik","Kolaborasi"].map(l=><a key={l} href={`#${l.toLowerCase()}`} className="block py-2.5 text-sm text-slate-600 hover:text-teal-600">{l}</a>)}<div className="flex gap-2 mt-3"><button onClick={()=>onNavigate("login")} className="flex-1 py-2 text-sm font-semibold text-teal-700 bg-teal-50 rounded-xl border border-teal-200">Masuk</button><button onClick={()=>onNavigate("register")} className="flex-1 py-2 text-sm font-semibold text-white bg-teal-600 rounded-xl">Daftar</button></div></div>}
+      </nav>
+
+      {/* HERO + SEARCH */}
+      <section id="beranda" className="relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none"><div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-teal-200/25 rounded-full blur-3xl"/><div className="absolute top-16 -left-16 w-72 h-72 bg-cyan-200/25 rounded-full blur-3xl"/></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-16 sm:pb-12">
+          <div className="text-center max-w-4xl mx-auto mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-xs font-semibold mb-5 shadow-sm"><Zap size={14}/>Sistem Pemetaan Luaran Ilmiah Berbasis Data Terbuka</div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4" style={{fontFamily:"'Outfit',sans-serif",lineHeight:1.1}}>
+              <span className="text-slate-800">Jurusan Kesehatan</span><br/><span className="bg-gradient-to-r from-teal-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent">Politeknik Negeri Subang</span>
+            </h1>
+            <p className="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto mb-8 leading-relaxed">Cari dan jelajahi seluruh luaran ilmiah dosen dari 6 sumber data terbuka: <strong className="text-slate-700">Google Scholar, ScienceDirect, SINTA, BIMA, PDDIKTI,</strong> dan <strong className="text-slate-700">GARUDA</strong>.</p>
+          </div>
+
+          {/* SEARCH CENTER */}
+          <div id="pencarian" className="relative rounded-3xl p-6 sm:p-8" style={{background:"linear-gradient(135deg,#0f766e 0%,#0e7490 50%,#1e40af 100%)"}}>
+            <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">{[...Array(4)].map((_,i)=><div key={i} className="absolute rounded-full border border-white/10" style={{width:200+i*120,height:200+i*120,top:"50%",left:"50%",transform:"translate(-50%,-50%)"}}/>)}</div>
+            <div className="relative">
+              <div className="text-center mb-4">
+                <h2 className="text-white font-bold text-lg sm:text-xl" style={{fontFamily:"'Outfit',sans-serif"}}>🔍 Pusat Pencarian Luaran Ilmiah</h2>
+                <p className="text-teal-100 text-xs sm:text-sm mt-1">Cari judul publikasi, nama dosen, DOI artikel, atau institusi dari 6 sumber sekaligus</p>
+              </div>
+              <SearchBar s={search}/>
+              {!search.hasSearched&&<div className="flex flex-wrap justify-center gap-2 mt-5"><span className="text-white/60 text-xs mr-1 py-1">Coba cari:</span>{suggestions.map(sg=><button key={sg} onClick={()=>{search.setQuery(sg);search.doSearch(sg);}} className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 text-xs font-medium border border-white/10 transition-all">{sg}</button>)}</div>}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* RESULTS */}
+      <SearchResults s={search}/>
+
+      {/* STATS */}
+      <section id="statistik" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[{l:"Total Publikasi",v:tp,i:BookOpen,c:"from-teal-500 to-cyan-500",sh:"shadow-teal-200"},{l:"Dosen Aktif",v:td,i:Users,c:"from-blue-500 to-indigo-500",sh:"shadow-blue-200"},{l:"Total Sitasi",v:ts,i:TrendingUp,c:"from-emerald-500 to-green-500",sh:"shadow-emerald-200"},{l:"Terindeks Scopus",v:tsc,i:Award,c:"from-amber-500 to-orange-500",sh:"shadow-amber-200"}].map((s,i)=>(
+            <div key={i} className="bg-white rounded-2xl p-4 sm:p-5 shadow-lg border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"><div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.c} flex items-center justify-center mb-3 shadow-lg ${s.sh} group-hover:scale-110 transition-transform`}><s.i size={20} className="text-white"/></div><div className="text-2xl sm:text-3xl font-extrabold text-slate-800" style={{fontFamily:"'Outfit',sans-serif"}}>{s.v.toLocaleString("id-ID")}</div><div className="text-xs sm:text-sm text-slate-500 mt-0.5">{s.l}</div></div>
+          ))}
+        </div>
+      </section>
+
+      {/* CHARTS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+        <div className="text-center mb-10"><h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2" style={{fontFamily:"'Outfit',sans-serif"}}>Tren Publikasi & Sitasi</h2><p className="text-slate-500 text-sm">Perkembangan output ilmiah 6 tahun terakhir</p></div>
+        <div className="grid lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3 bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-100">
+            <div className="flex items-center gap-2 mb-4"><Activity size={18} className="text-teal-600"/><span className="text-sm font-bold text-slate-700">Tren Tahunan</span></div>
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={YEARLY_STATS}><defs><linearGradient id="fP" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0d9488" stopOpacity={.3}/><stop offset="95%" stopColor="#0d9488" stopOpacity={0}/></linearGradient><linearGradient id="fC" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0284c7" stopOpacity={.2}/><stop offset="95%" stopColor="#0284c7" stopOpacity={0}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0"/><XAxis dataKey="year" tick={{fontSize:12}} stroke="#94a3b8"/><YAxis tick={{fontSize:12}} stroke="#94a3b8"/><Tooltip contentStyle={{borderRadius:12}}/><Legend verticalAlign="top" height={36}/>
+                <Area type="monotone" dataKey="publikasi" name="Publikasi" stroke="#0d9488" fill="url(#fP)" strokeWidth={2.5} dot={{r:4,fill:"#0d9488"}}/><Area type="monotone" dataKey="sitasi" name="Sitasi" stroke="#0284c7" fill="url(#fC)" strokeWidth={2.5} dot={{r:4,fill:"#0284c7"}}/><Line type="monotone" dataKey="scopus" name="Scopus" stroke="#f59e0b" strokeWidth={2} dot={{r:4,fill:"#f59e0b"}}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-100">
+            <div className="flex items-center gap-2 mb-4"><PieIcon size={18} className="text-teal-600"/><span className="text-sm font-bold text-slate-700">Distribusi Jenis Luaran</span></div>
+            <ResponsiveContainer width="100%" height={220}><PieChart><Pie data={PUB_TYPE_DATA} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value" label={({percent})=>`${(percent*100).toFixed(0)}%`} labelLine={false}>{PUB_TYPE_DATA.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer>
+            <div className="flex flex-wrap gap-2 mt-2 justify-center">{PUB_TYPE_DATA.map((d,i)=><span key={i} className="inline-flex items-center gap-1.5 text-xs text-slate-600"><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:d.color}}/>{d.name}</span>)}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* RESEARCHERS */}
+      <section id="peneliti" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+        <div className="text-center mb-10"><h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2" style={{fontFamily:"'Outfit',sans-serif"}}>Peneliti Jurusan Kesehatan</h2><p className="text-slate-500 text-sm">Profil akademik dosen beserta metrik luaran ilmiah</p></div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {RESEARCHERS.map(r=>(
+            <div key={r.id} className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 hover:shadow-xl hover:border-teal-200 hover:-translate-y-1 transition-all duration-300 group">
+              <div className="flex items-start gap-3 mb-4"><Avatar name={r.name} size={46}/><div className="min-w-0"><div className="text-sm font-bold text-slate-800 truncate group-hover:text-teal-700">{r.name}</div><div className="text-xs text-slate-500 mt-0.5">{r.prodi}</div><Badge variant="primary">{r.bidang}</Badge></div></div>
+              <div className="grid grid-cols-4 gap-2 text-center bg-slate-50 rounded-xl p-3">{[{l:"SINTA",v:r.sinta_score},{l:"H-Index",v:r.h_index},{l:"Publikasi",v:r.publications},{l:"Scopus",v:r.scopus}].map(m=><div key={m.l}><div className="text-base font-extrabold text-teal-700">{m.v}</div><div className="text-[10px] text-slate-500">{m.l}</div></div>)}</div>
+              <div className="flex gap-2 mt-3">
+                <a href={`https://scholar.google.com/citations?user=${r.scholar_id}`} target="_blank" rel="noopener" className="flex-1 text-center text-xs py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium">Scholar</a>
+                <a href={`https://sinta.kemdikbud.go.id/authors/profile/${r.sinta_id}`} target="_blank" rel="noopener" className="flex-1 text-center text-xs py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 font-medium">SINTA</a>
+                <a href={`https://pddikti.kemdikbud.go.id/data_dosen/${r.nidn}`} target="_blank" rel="noopener" className="flex-1 text-center text-xs py-1.5 bg-violet-50 text-violet-700 rounded-lg hover:bg-violet-100 font-medium">PDDIKTI</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* COLLAB */}
+      <section id="kolaborasi" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+        <div className="text-center mb-8"><h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2" style={{fontFamily:"'Outfit',sans-serif"}}>Peta Kolaborasi Penelitian</h2><p className="text-slate-500 text-sm">Jaringan kolaborasi dengan perguruan tinggi dan instansi mitra</p></div>
+        <div className="bg-white rounded-2xl p-4 sm:p-8 shadow-lg border border-slate-100"><CollabGraph/><p className="text-xs text-slate-400 text-center mt-4">Arahkan kursor ke node untuk melihat koneksi.</p></div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="mt-24 border-t border-slate-200 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div><div className="flex items-center gap-2.5 mb-3"><div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center"><Microscope size={18} className="text-white"/></div><span className="font-bold text-slate-800" style={{fontFamily:"'Outfit',sans-serif"}}>SciMap<span className="text-teal-600">Polsub</span></span></div><p className="text-xs text-slate-500 leading-relaxed">Sistem Pemetaan Luaran Ilmiah Berbasis Data Terbuka — Jurusan Kesehatan Politeknik Negeri Subang.</p></div>
+          <div><h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Navigasi</h4>{["Beranda","Pencarian","Peneliti","Statistik","Kolaborasi"].map(n=><a key={n} href={`#${n.toLowerCase()}`} className="block text-xs text-slate-500 hover:text-teal-600 mb-2">{n}</a>)}</div>
+          <div><h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Sumber Data</h4>{Object.values(API_SOURCES).map(s=><span key={s.id} className="block text-xs text-slate-500 mb-2">{s.icon} {s.name}</span>)}</div>
+          <div><h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Kontak</h4><div className="space-y-2 text-xs text-slate-500"><div className="flex items-center gap-2"><MapPin size={13}/>Jl. Brigjen Katamso No.37, Subang</div><div className="flex items-center gap-2"><Phone size={13}/>(0260) 411415</div><div className="flex items-center gap-2"><Mail size={13}/>kesehatan@polsub.ac.id</div></div></div>
+        </div><div className="mt-8 pt-6 border-t border-slate-200 text-center text-xs text-slate-400">© 2024 Jurusan Kesehatan — Politeknik Negeri Subang</div></div>
+      </footer>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTH PAGE
+// ═══════════════════════════════════════════════════════════
+function AuthPage({ mode, onNavigate, onLogin }) {
+  const [isL, setIsL] = useState(mode==="login");
+  const [showPw, setShowPw] = useState(false);
+  const [form, setForm] = useState({name:"",email:"",password:"",role:"peneliti"});
+  const [loading, setLoading] = useState(false);
+  const submit = ()=>{setLoading(true);setTimeout(()=>{setLoading(false);if(isL){const role=form.email.includes("admin")?"admin":"peneliti";onLogin({name:role==="admin"?"Admin Jurusan":"Dr. Hj. Siti Nurhasanah, M.Kes.",email:form.email,role});}else setIsL(true);},1200);};
+  return (
+    <div className="min-h-screen flex" style={{background:"linear-gradient(135deg,#0f766e 0%,#0e7490 50%,#1e40af 100%)"}}>
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">{[...Array(6)].map((_,i)=><div key={i} className="absolute rounded-full border border-white/30" style={{width:100+i*80,height:100+i*80,top:"50%",left:"50%",transform:"translate(-50%,-50%)"}}/>)}</div>
+        <div className="relative z-10 text-center"><div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center mx-auto mb-6 shadow-2xl"><Microscope size={40} className="text-white"/></div><h2 className="text-3xl font-extrabold text-white mb-3" style={{fontFamily:"'Outfit',sans-serif"}}>SciMap<span className="text-teal-200">Polsub</span></h2><p className="text-teal-100 text-sm max-w-sm leading-relaxed">Sistem Pemetaan Luaran Ilmiah Berbasis Data Terbuka</p>
+          <div className="flex flex-wrap gap-2 mt-8 justify-center">{Object.values(API_SOURCES).map(s=><span key={s.id} className="px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs border border-white/20">{s.icon} {s.name}</span>)}</div>
+        </div>
+      </div>
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8"><div className="w-full max-w-md"><div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8">
+        <button onClick={()=>onNavigate("landing")} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-teal-600 mb-6"><ChevronRight size={14} className="rotate-180"/>Kembali ke Beranda</button>
+        <div className="flex bg-slate-100 rounded-xl p-1 mb-6"><button onClick={()=>setIsL(true)} className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${isL?"bg-white text-teal-700 shadow-md":"text-slate-500"}`}>Masuk</button><button onClick={()=>setIsL(false)} className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${!isL?"bg-white text-teal-700 shadow-md":"text-slate-500"}`}>Daftar</button></div>
+        <h2 className="text-xl font-extrabold text-slate-800 mb-1" style={{fontFamily:"'Outfit',sans-serif"}}>{isL?"Selamat Datang Kembali":"Buat Akun Baru"}</h2>
+        <p className="text-sm text-slate-500 mb-6">{isL?"Masuk ke dasbor pengelolaan publikasi.":"Daftar untuk mengelola luaran ilmiah."}</p>
+        <div className="space-y-4">
+          {!isL&&<div><label className="block text-xs font-semibold text-slate-700 mb-1.5">Nama Lengkap</label><div className="relative"><User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input type="text" placeholder="Dr. Nama, M.Kes." value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-sm outline-none"/></div></div>}
+          <div><label className="block text-xs font-semibold text-slate-700 mb-1.5">Email Institusi</label><div className="relative"><Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input type="email" placeholder="nama@polsub.ac.id" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-sm outline-none"/></div></div>
+          <div><label className="block text-xs font-semibold text-slate-700 mb-1.5">Kata Sandi</label><div className="relative"><Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input type={showPw?"text":"password"} placeholder="••••••••" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-sm outline-none"/><button onClick={()=>setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">{showPw?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></div>
+          {!isL&&<div><label className="block text-xs font-semibold text-slate-700 mb-1.5">Role</label><div className="flex gap-2">{[{k:"peneliti",l:"Peneliti/Dosen",i:GraduationCap},{k:"admin",l:"Admin Jurusan",i:Shield}].map(r=><button key={r.k} onClick={()=>setForm({...form,role:r.k})} className={`flex-1 flex items-center gap-2 p-3 rounded-xl border text-xs font-semibold ${form.role===r.k?"border-teal-400 bg-teal-50 text-teal-700 shadow-md":"border-slate-200 text-slate-500"}`}><r.i size={16}/>{r.l}</button>)}</div></div>}
+          <button onClick={submit} disabled={loading} className="w-full py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold rounded-xl shadow-xl shadow-teal-200 flex items-center justify-center gap-2 text-sm disabled:opacity-60">{loading?<RefreshCw size={18} className="animate-spin"/>:isL?<><LogIn size={18}/>Masuk ke Dasbor</>:<><UserPlus size={18}/>Daftar Sekarang</>}</button>
+          {isL&&<div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3"><p className="text-xs text-amber-700 font-medium mb-1">🔑 Demo Login:</p><p className="text-xs text-amber-600"><strong>Admin:</strong> admin@polsub.ac.id</p><p className="text-xs text-amber-600"><strong>Peneliti:</strong> siti@polsub.ac.id</p><p className="text-xs text-amber-600">Password: apapun (demo mode)</p></div>}
+        </div>
+      </div></div></div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function Dashboard({ user, onLogout }) {
+  const [sO, setSO] = useState(true);
+  const [aM, setAM] = useState("overview");
+  const [toast, setToast] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const isA = user.role==="admin";
+  const sync = ()=>{setSyncing(true);setTimeout(()=>{setSyncing(false);setToast({message:"Sinkronisasi berhasil dari 6 sumber!",type:"success"});},2500);};
+  const SINTA_B = [{tier:"S1",count:8,color:"#0d9488"},{tier:"S2",count:24,color:"#0ea5e9"},{tier:"S3",count:18,color:"#8b5cf6"},{tier:"S4",count:12,color:"#f59e0b"},{tier:"S5",count:6,color:"#f43f5e"}];
+
+  const menus = [
+    {id:"overview",label:"Ringkasan",icon:LayoutDashboard,r:["peneliti","admin"]},{id:"profil",label:"Data Peneliti",icon:UserCheck,r:["peneliti","admin"]},
+    {id:"publikasi",label:"Luaran Peneliti",icon:BookMarked,r:["peneliti","admin"]},{id:"sinkronisasi",label:"Sinkronisasi Data",icon:RefreshCw,r:["peneliti","admin"]},
+    {id:"d1",label:"",r:["admin"]},{id:"kelola-web",label:"Kelola Konten Web",icon:Edit3,r:["admin"]},{id:"analisis",label:"Analisis Jurusan",icon:BarChart3,r:["admin"]},
+    {id:"kelola-user",label:"Kelola Pengguna",icon:Users,r:["admin"]},{id:"d2",label:"",r:["peneliti","admin"]},{id:"settings",label:"Pengaturan",icon:Settings,r:["peneliti","admin"]},
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex">
+      {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
+      <aside className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200 shadow-xl transition-all duration-300 flex flex-col ${sO?"w-64":"w-16"}`}>
+        <div className="h-16 flex items-center px-4 border-b border-slate-100 gap-3"><div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shrink-0 shadow-lg shadow-teal-200"><Microscope size={18} className="text-white"/></div>{sO&&<div><div className="text-sm font-bold text-slate-800" style={{fontFamily:"'Outfit',sans-serif"}}>SciMap<span className="text-teal-600">Polsub</span></div><div className="text-[10px] text-slate-400">Dashboard</div></div>}</div>
+        <nav className="flex-1 py-4 px-2 overflow-y-auto">{menus.filter(m=>m.r.includes(user.role)).map(m=>{if(m.id.startsWith("d"))return<hr key={m.id} className="my-3 border-slate-100"/>;return<button key={m.id} onClick={()=>setAM(m.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm font-medium transition-all ${aM===m.id?"bg-teal-50 text-teal-700 shadow-sm":"text-slate-600 hover:bg-slate-50"}`}><m.icon size={18} className="shrink-0"/>{sO&&<span className="truncate">{m.label}</span>}</button>;})}</nav>
+        <div className="p-3 border-t border-slate-100"><div className={`flex items-center gap-3 ${sO?"":"justify-center"}`}><Avatar name={user.name} size={34}/>{sO&&<div className="min-w-0 flex-1"><div className="text-xs font-bold text-slate-700 truncate">{user.name}</div><Badge variant={isA?"danger":"primary"}>{isA?"Admin":"Peneliti"}</Badge></div>}</div></div>
+      </aside>
+
+      <main className={`flex-1 transition-all duration-300 ${sO?"ml-64":"ml-16"}`}>
+        <header className="sticky top-0 z-30 h-14 bg-white/80 backdrop-blur-xl border-b border-slate-200 flex items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-3"><button onClick={()=>setSO(!sO)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><Menu size={20}/></button><span className="text-sm font-semibold text-slate-700">{menus.find(m=>m.id===aM)?.label||"Dashboard"}</span></div>
+          <div className="flex items-center gap-2"><button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 relative"><Bell size={18}/><span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"/></button><button onClick={onLogout} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg"><LogOut size={15}/>{sO&&"Keluar"}</button></div>
+        </header>
+        <div className="p-4 sm:p-6 lg:p-8">
+          {aM==="overview"&&<div className="space-y-6">
+            <div className="bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 rounded-2xl p-6 text-white shadow-xl"><h2 className="text-lg font-bold mb-1" style={{fontFamily:"'Outfit',sans-serif"}}>{isA?"Dashboard Admin — Jurusan Kesehatan":`Selamat datang, ${user.name.split(",")[0]}`}</h2><p className="text-teal-100 text-sm">{isA?"Pantau seluruh luaran ilmiah dan kelola konten website.":"Kelola dan pantau publikasi serta profil akademik Anda."}</p></div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{(isA?[{l:"Total Dosen",v:"6",i:Users,c:"text-teal-600 bg-teal-50"},{l:"Total Publikasi",v:"121",i:BookOpen,c:"text-blue-600 bg-blue-50"},{l:"Scopus",v:"16",i:Award,c:"text-amber-600 bg-amber-50"},{l:"Total Sitasi",v:"695",i:TrendingUp,c:"text-emerald-600 bg-emerald-50"}]:[{l:"Publikasi Saya",v:"23",i:BookOpen,c:"text-teal-600 bg-teal-50"},{l:"Total Sitasi",v:"87",i:TrendingUp,c:"text-blue-600 bg-blue-50"},{l:"H-Index",v:"5",i:Award,c:"text-amber-600 bg-amber-50"},{l:"Skor SINTA",v:"312",i:Star,c:"text-emerald-600 bg-emerald-50"}]).map((s,i)=><div key={i} className="bg-white rounded-xl p-4 shadow-md border border-slate-100"><div className={`w-9 h-9 rounded-lg ${s.c} flex items-center justify-center mb-2`}><s.i size={18}/></div><div className="text-2xl font-extrabold text-slate-800">{s.v}</div><div className="text-xs text-slate-500">{s.l}</div></div>)}</div>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl p-5 shadow-md border border-slate-100"><h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><BarChart3 size={16} className="text-teal-600"/>Publikasi per Tahun</h3><ResponsiveContainer width="100%" height={220}><BarChart data={YEARLY_STATS}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/><XAxis dataKey="year" tick={{fontSize:11}} stroke="#94a3b8"/><YAxis tick={{fontSize:11}} stroke="#94a3b8"/><Tooltip contentStyle={{borderRadius:12}}/><Bar dataKey="publikasi" fill="#0d9488" radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div>
+              <div className="bg-white rounded-xl p-5 shadow-md border border-slate-100"><h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><Layers size={16} className="text-teal-600"/>{isA?"Distribusi SINTA":"Sitasi Kumulatif"}</h3>{isA?<ResponsiveContainer width="100%" height={220}><BarChart data={SINTA_B} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/><XAxis type="number" tick={{fontSize:11}} stroke="#94a3b8"/><YAxis dataKey="tier" type="category" tick={{fontSize:12,fontWeight:600}} stroke="#94a3b8" width={40}/><Tooltip contentStyle={{borderRadius:12}}/><Bar dataKey="count" radius={[0,6,6,0]}>{SINTA_B.map((e,i)=><Cell key={i} fill={e.color}/>)}</Bar></BarChart></ResponsiveContainer>:<ResponsiveContainer width="100%" height={220}><LineChart data={YEARLY_STATS}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/><XAxis dataKey="year" tick={{fontSize:11}} stroke="#94a3b8"/><YAxis tick={{fontSize:11}} stroke="#94a3b8"/><Tooltip contentStyle={{borderRadius:12}}/><Line type="monotone" dataKey="sitasi" stroke="#0284c7" strokeWidth={2.5} dot={{r:5,fill:"#0284c7"}}/></LineChart></ResponsiveContainer>}</div>
+            </div>
+          </div>}
+
+          {aM==="profil"&&<div className="space-y-6"><div className="bg-white rounded-xl p-6 shadow-md border border-slate-100"><div className="flex flex-col sm:flex-row gap-5 items-start"><Avatar name={isA?"Admin":RESEARCHERS[0].name} size={72}/><div className="flex-1"><h2 className="text-lg font-extrabold text-slate-800">{isA?"Administrator":RESEARCHERS[0].name}</h2><p className="text-sm text-slate-500">{isA?"Admin":RESEARCHERS[0].prodi}</p>{!isA&&<div className="flex flex-wrap gap-2 mt-3"><Badge variant="primary">NIDN: {RESEARCHERS[0].nidn}</Badge><Badge variant="success">SINTA: {RESEARCHERS[0].sinta_id}</Badge></div>}</div><button className="px-4 py-2 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-xl flex items-center gap-2"><Edit3 size={14}/>Edit</button></div></div>{!isA&&<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">{[{l:"Skor SINTA",v:RESEARCHERS[0].sinta_score,i:Star,c:"text-teal-600"},{l:"H-Index",v:RESEARCHERS[0].h_index,i:TrendingUp,c:"text-blue-600"},{l:"Publikasi",v:RESEARCHERS[0].publications,i:BookOpen,c:"text-emerald-600"},{l:"Scopus",v:RESEARCHERS[0].scopus,i:Award,c:"text-amber-600"}].map((m,i)=><div key={i} className="bg-white rounded-xl p-5 shadow-md border border-slate-100 text-center"><m.i size={22} className={`mx-auto mb-2 ${m.c}`}/><div className="text-3xl font-extrabold text-slate-800">{m.v}</div><div className="text-sm font-semibold text-slate-700 mt-1">{m.l}</div></div>)}</div>}</div>}
+
+          {aM==="publikasi"&&<div className="space-y-4"><div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"><div><h2 className="text-lg font-bold text-slate-800">Daftar Publikasi</h2><p className="text-xs text-slate-500">Data dari 6 sumber terbuka</p></div><div className="flex gap-2"><button className="flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl text-slate-600"><Filter size={14}/>Filter</button><button className="flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-xl text-slate-600"><Download size={14}/>Ekspor</button>{isA&&<button className="flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-teal-600 text-white rounded-xl shadow-lg shadow-teal-200"><PlusCircle size={14}/>Tambah</button>}</div></div>
+            {MOCK_SEARCH_DB.filter(p=>p.source_id!=="pddikti").slice(0,10).map(p=>{const src=API_SOURCES[p.source_id];return<div key={p.id} className="bg-white rounded-xl p-4 shadow-md border border-slate-100 hover:border-teal-200 transition-all" style={{borderLeft:`3px solid ${src?.color}`}}><div className="flex flex-wrap gap-1.5 mb-1"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-white" style={{backgroundColor:src?.color}}>{src?.icon} {src?.name}</span>{p.grade!=="—"&&<Badge variant={p.grade?.startsWith("Q")?"success":p.grade==="Hibah"?"purple":"info"}>{p.grade}</Badge>}<Badge variant="default">{p.year}</Badge></div><h3 className="text-sm font-bold text-slate-800">{p.title}</h3><p className="text-xs text-slate-500 mt-1">{p.authors.join(", ")||"—"}</p><p className="text-xs text-slate-400 italic">{p.journal}</p>{p.citations>0&&<span className="inline-flex items-center gap-1 text-xs text-amber-600 font-bold mt-1"><TrendingUp size={12}/>{p.citations} sitasi</span>}</div>;})}
+          </div>}
+
+          {aM==="sinkronisasi"&&<div className="bg-white rounded-xl p-6 shadow-md border border-slate-100"><h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2"><RefreshCw size={20} className="text-teal-600"/>Sinkronisasi Data</h2><p className="text-sm text-slate-500 mb-6">Tarik data terbaru dari 6 sumber terbuka.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">{Object.values(API_SOURCES).map((s,i)=>{const ok=i%3!==2;return<div key={s.id} className="rounded-xl border border-slate-200 p-4 flex items-center gap-3"><div className={`w-3 h-3 rounded-full ${ok?"bg-emerald-500":"bg-amber-500"} shadow-lg`}/><div><div className="text-sm font-bold text-slate-700">{s.icon} {s.name}</div><div className={`text-xs ${ok?"text-emerald-600":"text-amber-600"}`}>{ok?"Tersinkron":"Perlu Update"}</div></div></div>;})}</div>
+            <button onClick={sync} disabled={syncing} className="px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold rounded-xl shadow-xl shadow-teal-200 flex items-center gap-2 text-sm disabled:opacity-60"><RefreshCw size={18} className={syncing?"animate-spin":""}/>{syncing?"Menyinkronkan...":"Sinkronisasi Sekarang"}</button>
+          </div>}
+
+          {aM==="kelola-web"&&isA&&<div className="bg-white rounded-xl p-6 shadow-md border border-slate-100"><h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Edit3 size={20} className="text-teal-600"/>Kelola Konten</h2><div className="space-y-4">{["Hero Section","Profil Jurusan","Informasi Kontak","Konfigurasi API","Banner Pengumuman"].map((s,i)=><div key={i} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-teal-200 transition-all"><div className="text-sm font-bold text-slate-700">{s}</div><button className="px-4 py-2 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-xl flex items-center gap-2"><Edit3 size={13}/>Edit</button></div>)}</div></div>}
+
+          {aM==="analisis"&&isA&&<div className="space-y-6"><div className="bg-white rounded-xl shadow-md border border-slate-100 overflow-hidden"><div className="px-5 py-4 border-b border-slate-100"><h3 className="text-sm font-bold text-slate-700 flex items-center gap-2"><Users size={16} className="text-teal-600"/>Perbandingan Metrik Dosen</h3></div><div className="overflow-x-auto"><table className="w-full text-xs"><thead className="bg-slate-50 text-slate-500 uppercase"><tr><th className="text-left px-5 py-3">Nama</th><th className="text-center px-3 py-3">SINTA</th><th className="text-center px-3 py-3">H-Idx</th><th className="text-center px-3 py-3">Pub</th><th className="text-center px-3 py-3">Scopus</th></tr></thead><tbody className="divide-y divide-slate-100">{RESEARCHERS.map(r=><tr key={r.id} className="hover:bg-teal-50/40"><td className="px-5 py-3"><div className="flex items-center gap-2"><Avatar name={r.name} size={28}/><span className="font-medium text-slate-700 truncate max-w-[200px]">{r.name}</span></div></td><td className="px-3 py-3 text-center font-bold text-teal-700">{r.sinta_score}</td><td className="px-3 py-3 text-center font-bold text-blue-600">{r.h_index}</td><td className="px-3 py-3 text-center font-bold text-slate-700">{r.publications}</td><td className="px-3 py-3 text-center font-bold text-amber-600">{r.scopus}</td></tr>)}</tbody></table></div></div>
+            <div className="bg-white rounded-xl p-5 shadow-md border border-slate-100"><h3 className="text-sm font-bold text-slate-700 mb-4"><BarChart3 size={16} className="inline text-teal-600 mr-2"/>Perbandingan</h3><ResponsiveContainer width="100%" height={260}><BarChart data={RESEARCHERS.map(r=>({name:r.name.split(",")[0].split(".").pop().trim(),pub:r.publications,scopus:r.scopus}))}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9"/><XAxis dataKey="name" tick={{fontSize:10}} stroke="#94a3b8"/><YAxis tick={{fontSize:11}} stroke="#94a3b8"/><Tooltip contentStyle={{borderRadius:12}}/><Legend verticalAlign="top" height={36}/><Bar dataKey="pub" name="Publikasi" fill="#0d9488" radius={[4,4,0,0]}/><Bar dataKey="scopus" name="Scopus" fill="#f59e0b" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div>
+          </div>}
+
+          {aM==="kelola-user"&&isA&&<div className="bg-white rounded-xl p-6 shadow-md border border-slate-100"><div className="flex items-center justify-between mb-6"><h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Users size={20} className="text-teal-600"/>Kelola Pengguna</h2><button className="flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-teal-600 text-white rounded-xl shadow-lg shadow-teal-200"><PlusCircle size={14}/>Tambah</button></div><div className="space-y-3">{[{name:"Admin Jurusan",email:"admin@polsub.ac.id",role:"Admin"},...RESEARCHERS.map(r=>({name:r.name,email:r.email,role:"Peneliti"}))].map((u,i)=><div key={i} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-teal-200"><div className="flex items-center gap-3 min-w-0"><Avatar name={u.name} size={36}/><div><div className="text-sm font-bold text-slate-700 truncate">{u.name}</div><div className="text-xs text-slate-500">{u.email}</div></div></div><div className="flex items-center gap-2"><Badge variant={u.role==="Admin"?"danger":"primary"}>{u.role}</Badge><Badge variant="success">Aktif</Badge></div></div>)}</div></div>}
+
+          {aM==="settings"&&<div className="bg-white rounded-xl p-6 shadow-md border border-slate-100"><h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Settings size={20} className="text-teal-600"/>Pengaturan</h2><div className="space-y-5 max-w-lg">{[{l:"Nama",v:user.name,t:"text"},{l:"Email",v:user.email,t:"email"},{l:"Sandi",v:"••••••••",t:"password"}].map((f,i)=><div key={i}><label className="block text-xs font-semibold text-slate-700 mb-1.5">{f.l}</label><input type={f.t} defaultValue={f.v} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-sm outline-none"/></div>)}<button className="px-6 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl shadow-lg shadow-teal-200">Simpan</button></div></div>}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROOT
+// ═══════════════════════════════════════════════════════════
+export default function App() {
+  const [page, setPage] = useState("landing");
+  const [user, setUser] = useState(null);
+  return (
+    <div style={{fontFamily:"'Outfit','Segoe UI',system-ui,sans-serif"}}>
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+      <style>{`@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes fadeUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}*{scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}`}</style>
+      {page==="landing"&&<LandingPage onNavigate={setPage}/>}
+      {(page==="login"||page==="register")&&<AuthPage mode={page} onNavigate={setPage} onLogin={u=>{setUser(u);setPage("dashboard");}}/>}
+      {page==="dashboard"&&user&&<Dashboard user={user} onLogout={()=>{setUser(null);setPage("landing");}}/>}
+    </div>
+  );
+}
